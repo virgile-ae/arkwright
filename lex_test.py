@@ -8,10 +8,10 @@ class TestLexer(unittest.TestCase):
         input_string = 'var if or nil'
         tokens = lex(input_string)
         expected = [
-            Lexeme('var', 'var'),
-            Lexeme('if', 'if'),
-            Lexeme('or', 'or'),
-            Lexeme('nil', None)
+            Lexeme('keyword', 'var'),
+            Lexeme('keyword', 'if'),
+            Lexeme('keyword', 'or'),
+            Lexeme('keyword', None)
         ]
         self.assertEqual(tokens, expected)
 
@@ -22,7 +22,7 @@ class TestLexer(unittest.TestCase):
             Lexeme('boolean', True),
             Lexeme('string', 'hi 123'),
             Lexeme('number', 123.23),
-            Lexeme('identifier', 'abra'),
+            Lexeme('variable', 'abra'),
         ]
         self.assertEqual(tokens, expected)
 

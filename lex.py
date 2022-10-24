@@ -1,19 +1,22 @@
 import re
 
 # Token name, regex
-keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not', 'nil',] 
+keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not'] 
 keywords = [ ('keyword', x) for x in keywords ]
 
-symbols = ['=', '\\+', '-', '\\*', '/']
+symbols = ['=', r'\+', '-', r'\*', '/']
 symbols = [ ('keyword', x) for x in symbols ]
 
 patterns = [
     ['left paren',    r'\('],
     ['right paren',   r'\)'],
+    ['left bracket',  r'\]'],
+    ['right bracket', r'\['],
     ['number',        r'(-)?\d+(\.\d+)?'],
     ['boolean',       r'true|false'],
+    ['nil',           r'nil'],
     ['string',        r'"(.*)"'],
-    ['variable',    r'[a-zA-Z_]+'],
+    ['variable',      r'[a-zA-Z_]+'],
     ['newline',       '\n'],
 ]
 
@@ -35,7 +38,7 @@ class Lexeme:
         return isinstance(other, Lexeme) and self.type == other.type and self.value == other.value
 
 
-# TOKENIZER / LEXER
+# LEXER
 def lex(input_string: str) -> list[Lexeme]:
     """Groups characters into lexemes so they are easier to parse."""
     input_string = input_string.strip()
@@ -45,21 +48,20 @@ def lex(input_string: str) -> list[Lexeme]:
         for [name, pattern] in TOKENS:
             if matches := pattern.match(input_string):
                 m = str(matches.groups(1)[0])
-                match name:
-                    case 'number':
-                        tokens.append(Lexeme(name, float(m), line))
-                    case 'string':
-                        tokens.append(Lexeme(name, m[1:-1], line))
-                    case 'boolean':
-                        tokens.append(Lexeme(name, bool(m.capitalize()), line))
-                    case 'keyword' if m == 'nil':
-                        tokens.append(Lexeme(name, None, line))
-                    case 'newline':
-                        line += 1
-                    case _:
-                        tokens.append(Lexeme(name, m, line))
+                if name == 'number':
+                    tokens.append(Lexeme(name, float(m), line))
+                elif name == 'string':
+                    tokens.append(Lexeme(name, m[1:-1], line))
+                elif name == 'boolean':
+                    tokens.append(Lexeme(name, bool(m.capitalize()), line))
+                elif name == 'nil':
+                    tokens.append(Lexeme(name, None, line))
+                elif name == 'newline':
+                    line += 1
+                else:
+                    tokens.append(Lexeme(name, m, line))
                 input_string = input_string[len(m):].strip()
                 break
         else:
-            raise RuntimeError(f"Unrecognized token on line {line}: {input_string.splitlines()[0]}")
+            raise RuntimeError(f"unrecognized lexeme on line {line}: {input_string.splitlines()[0]}")
     return tokens

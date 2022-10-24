@@ -1,5 +1,8 @@
 from lex import lex
-from parse import parse_sexpr
+from parse import parse
 
 
-print(parse_sexpr(lex('(hello "there" -123.2)')))
+def interpreter(code: str):
+    lexemes = lex(code)
+    parse_tree = parse(lexemes)
+    return
