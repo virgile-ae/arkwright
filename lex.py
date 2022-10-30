@@ -8,13 +8,15 @@ symbols = ['=', '\\+', '-', '\\*', '/']
 symbols = [ ('keyword', x) for x in symbols ]
 
 patterns = [
-    ['left paren',    r'\('],
-    ['right paren',   r'\)'],
-    ['number',        r'(-)?\d+(\.\d+)?'],
-    ['boolean',       r'true|false'],
-    ['string',        r'"(.*)"'],
-    ['variable',    r'[a-zA-Z_]+'],
-    ['newline',       '\n'],
+    ['left paren',      r'\('],
+    ['right paren',     r'\)'],
+    ['left bracket',    r'\['],
+    ['right bracket',   r'\]'],
+    ['number',          r'(-)?\d+(\.\d+)?'],
+    ['boolean',         r'true|false'],
+    ['string',          r'"(.*)"'],
+    ['variable',        r'[a-zA-Z_]+'],
+    ['newline',          '\n'],
 ]
 
 # compiling all of the regex patterns for the 

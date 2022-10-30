@@ -1,5 +1,5 @@
 from lex import Lexeme
-from parse import parse, parse_expression, parse_sexpr, parse_value, SExpr, Value
+from parse import parse, parse_expression, parse_list, parse_sexpr, parse_value, SExpr, Value
 import unittest
 
 # TODO: finish writing tests
@@ -18,7 +18,10 @@ class TestParse(unittest.TestCase):
         pass
 
     def test_parse_expression_failure(self):
-        pass
+        expected = None
+        inputted = []
+        output = parse_expression(inputted)
+        self.assertEqual(expected, output)
 
     def test_parse_sexpr(self):
         pass
@@ -36,6 +39,24 @@ class TestParse(unittest.TestCase):
         self.assertEqual(expected, output)
 
     def test_parse_value_failure(self):
+        expected = None
+        inputted = []
+        output = parse_value(inputted)
+        self.assertEqual(expected, output)
+
+    def test_parse_list(self):
+        expected = [[], Value('string', 'hello')], []
+        inputted = [
+            Lexeme('left bracket', '['),
+            Lexeme('left bracket', '['),
+            Lexeme('right bracket', ']'),
+            Lexeme('string', 'hello'),
+            Lexeme('right bracket', ']'),
+        ]
+        output = parse_list(inputted)
+        self.assertEqual(expected, output)
+
+    def test_parse_list_failure(self):
         expected = None
         inputted = []
         output = parse_value(inputted)

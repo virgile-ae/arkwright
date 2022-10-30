@@ -19,7 +19,7 @@
 
 # The grammar
 ```
-expression = <s_expr> | <value> ;
+expression = <s_expr> | <list> | <value> ;
 
 s_expr = '(' <identifier> <expression>* ')'
 
@@ -33,6 +33,8 @@ literal =
     <boolean> |
     "nil"
     ;
+
+list = '[' expression* ']' ;
 
 # all of the below are handled by the lexer
 

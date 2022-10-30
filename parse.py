@@ -12,7 +12,7 @@ class SExpr:
 
 @dataclass
 class Value:
-    """Values can be variabls or literals."""
+    """Values can be variables or literals."""
     type: str
     value: object
 
@@ -33,11 +33,13 @@ def parse_expression(lexemes: list[Lexeme]) -> ParseResult:
     match lexemes[0].type:
         case 'left paren':
             return parse_sexpr(lexemes)
+        case 'left bracket':
+            return parse_list(lexemes)
         case 'number' | 'string' | 'boolean':
             return parse_value(lexemes)
         case _ if lexemes[0].value == None:
             return parse_value(lexemes)
-        case 'right paren':
+        case 'right paren' | 'right bracket':
             return
         case _:
             raise RuntimeError(f'unexpected lexeme: {lexemes[0].value}')
@@ -57,8 +59,10 @@ def parse_sexpr(lexemes: list[Lexeme]) -> ParseResult:
         lexemes = result[1]
         arguments.append(result[0])
 
-    if lexemes[0].type != 'right paren':
+    if not lexemes:
         raise RuntimeError(f'unexpected EOF: expected right paren')
+    elif lexemes[0].type != 'right paren':
+        raise RuntimeError(f"unexpected lexeme: '{lexemes[0].value}', expected right paren")
     
     return SExpr(identifier.value, arguments), lexemes[1:]
 
@@ -70,6 +74,22 @@ def parse_value(lexemes: list[Lexeme]) -> ParseResult:
         return
     return Value(lexemes[0].type, lexemes[0].value,), lexemes[1:]
 
+def parse_list(lexemes: list[Lexeme]) -> ParseResult:
+    if not lexemes or lexemes[0].type != 'left bracket':
+        return
+
+    elements = []
+    lexemes = lexemes[1:]
+    while result := parse_expression(lexemes):
+        lexemes = result[1]
+        elements.append(result[0])
+
+    if not lexemes:
+        raise RuntimeError(f'unexpected EOF: expected right bracket')
+    elif lexemes[0].type != 'right bracket':
+        raise RuntimeError(f"unexpected lexeme: '{lexemes[0].value}', expected right bracket")
+
+    return elements, lexemes[1:]
 
 # PARSER
 def parse(lexemes: list[Lexeme]) -> list[SExpr | Value]:
