@@ -1,14 +1,6 @@
 from dataclasses import dataclass
 from lex import Lexeme
 
-@dataclass
-class SExpr:
-    identifier: object
-    arguments: list
-
-    def __repr__(self) -> str:
-        args = ' '.join(map(str, self.arguments))
-        return f'({self.identifier} {args})'
 
 @dataclass
 class Value:
@@ -19,6 +11,28 @@ class Value:
     def __repr__(self) -> str:
         return str(self.value)
 
+    def __eq__(self, other) -> bool:
+        if type(self) == type(other):
+            return self.value == other.value and self.type == other.type
+        else:
+            raise TypeError
+
+
+@dataclass
+class SExpr:
+    identifier: Value
+    arguments: list
+
+    def __repr__(self) -> str:
+        args = ' '.join(map(str, self.arguments))
+        return f'({self.identifier} {args})'
+
+    def __eq__(self, other) -> bool:
+        return type(self) == type(other) and            \
+                self.identifier == other.identifier and \
+                self.arguments == other.arguments
+
+
 # An expression is something which evaluates to something,
 # so everything is an expression.
 Expression = SExpr | Value
@@ -26,53 +40,83 @@ Expression = SExpr | Value
 # object can be a sexpr, literal, keyword, variable
 ParseResult = tuple[object, list[Lexeme]] | None
 
+
 def parse_expression(lexemes: list[Lexeme]) -> ParseResult:
     if not lexemes:
         return
 
-    match lexemes[0].type:
-        case 'left paren':
-            return parse_sexpr(lexemes)
-        case 'left bracket':
-            return parse_list(lexemes)
-        case 'number' | 'string' | 'boolean':
-            return parse_value(lexemes)
-        case _ if lexemes[0].value == None:
-            return parse_value(lexemes)
-        case 'right paren' | 'right bracket':
-            return
-        case _:
-            raise RuntimeError(f'unexpected lexeme: {lexemes[0].value}')
+    first = lexemes[0].type
+
+    if first == 'left paren':
+        return parse_sexpr(lexemes)
+
+    if first in [
+            'number', 'string', 'boolean', 'nil', 'left bracket', 'variable'
+    ]:
+        return parse_value(lexemes)
+
+    if first in ['right paren', 'right bracket']:
+        return
+
+    raise RuntimeError(f'unexpected lexeme: {lexemes[0].value}')
+
 
 def parse_sexpr(lexemes: list[Lexeme]) -> ParseResult:
     if not lexemes or lexemes[0].type != 'left paren':
-        return # signals failure (thing which is to be parsed isn't an s expression)
+        return  # signals failure (thing which is to be parsed isn't an s expression)
 
-    if lexemes[1].type not in ['variable', 'keyword']: # if it isn't an identifier
-        raise RuntimeError(f"unexpected lexeme: '{lexemes[1].value}', expected identifier")
+    if lexemes[1].type not in ['variable', 'keyword', 'symbol']:
+        # if it isn't an identifier
+        raise RuntimeError(
+            f"unexpected lexeme: '{lexemes[1].value}', expected identifier")
 
     identifier = lexemes[1]
-
     arguments = []
     lexemes = lexemes[2:]
+
     while result := parse_expression(lexemes):
         lexemes = result[1]
         arguments.append(result[0])
 
     if not lexemes:
-        raise RuntimeError(f'unexpected EOF: expected right paren')
-    elif lexemes[0].type != 'right paren':
-        raise RuntimeError(f"unexpected lexeme: '{lexemes[0].value}', expected right paren")
-    
+        raise RuntimeError('unexpected EOF: expected right paren')
+
+    if lexemes[0].type != 'right paren':
+        raise RuntimeError(
+            f"unexpected lexeme: '{lexemes[0]}', expected right paren")
+
     return SExpr(identifier.value, arguments), lexemes[1:]
 
 
-def parse_value(lexemes: list[Lexeme]) -> ParseResult:
-    if not lexemes or                                                         \
-        lexemes[0].type not in ['number', 'string', 'boolean', 'variable'] or \
-        lexemes[0].value == None:
+def parse_list(lexemes: list[Lexeme]) -> ParseResult:
+    if not lexemes or lexemes[0].type != 'left bracket':
         return
-    return Value(lexemes[0].type, lexemes[0].value,), lexemes[1:]
+
+    elements = []
+    lexemes = lexemes[1:]
+
+    while result := parse_expression(lexemes):
+        lexemes = result[1]
+        elements.append(result[0])
+
+    if not lexemes:
+        raise RuntimeError('unexpected EOF: expected right bracket')
+
+    if lexemes[0].type != 'right bracket':
+        raise RuntimeError(
+            f"unexpected lexeme: '{lexemes[0]}', expected right bracket")
+
+    return Value('list', elements), lexemes[1:]
+
+
+def parse_value(lexemes: list[Lexeme]) -> ParseResult:
+    if not lexemes or lexemes[0].type not in [
+            'number', 'string', 'boolean', 'variable', 'nil', 'left bracket'
+    ]:
+        return
+    if lexemes[0].type == 'left bracket':
+        return parse_list(lexemes)
+    return Value(lexemes[0].type, lexemes[0].value), lexemes[1:]
 
 def parse_list(lexemes: list[Lexeme]) -> ParseResult:
     if not lexemes or lexemes[0].type != 'left bracket':
@@ -92,9 +136,13 @@ def parse_list(lexemes: list[Lexeme]) -> ParseResult:
     return elements, lexemes[1:]
 
 # PARSER
-def parse(lexemes: list[Lexeme]) -> list[SExpr | Value]:
+def parse(lexemes: list[Lexeme]) -> list[Expression]:
     expressions = []
     while result := parse_expression(lexemes):
         lexemes = result[1]
         expressions.append(result[0])
+
+    if lexemes:  # no lexemes should be left
+        raise RuntimeError(f'unexpected lexemes at EOF: {lexemes}')
+
     return expressions

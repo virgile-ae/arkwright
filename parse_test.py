@@ -1,12 +1,27 @@
-from lex import Lexeme
-from parse import parse, parse_expression, parse_list, parse_sexpr, parse_value, SExpr, Value
+from lex import Lexeme, lex
+from parse import parse, parse_expression, parse_sexpr, parse_value, parse_list, Value, SExpr
 import unittest
 
 # TODO: finish writing tests
 
+
 class TestParse(unittest.TestCase):
+
     def test_parse(self):
-        pass
+        expected = [
+            SExpr(Value('keyword', 'print'),[ Value('string', 'hello')]),
+            SExpr(Value('variable', 'map'), [
+                Value('variable', 'fn'),
+                Value('list', [
+                    Value('boolean', True),
+                    Value('boolean', False),
+                    Value('number', 23.0),
+                ])
+            ])
+        ]
+        inputted = lex('(print "hello") (map fn [true false 23])')
+        output = parse(inputted)
+        self.assertEqual(expected, output)
 
     def test_parse_failure(self):
         expected = []
@@ -15,7 +30,12 @@ class TestParse(unittest.TestCase):
         self.assertEqual(expected, output)
 
     def test_parse_expression(self):
-        pass
+        expected = SExpr('var',
+                         [Value('variable', 'hi'),
+                          Value('number', 23.0)]), []
+        inputted = lex('(var hi 23)')
+        output = parse_expression(inputted)
+        self.assertEqual(expected, output)
 
     def test_parse_expression_failure(self):
         expected = None
@@ -45,13 +65,11 @@ class TestParse(unittest.TestCase):
         self.assertEqual(expected, output)
 
     def test_parse_list(self):
-        expected = [[], Value('string', 'hello')], []
+        expected = Value('list', [Value('number', -123.2)]), []
         inputted = [
             Lexeme('left bracket', '['),
-            Lexeme('left bracket', '['),
-            Lexeme('right bracket', ']'),
-            Lexeme('string', 'hello'),
-            Lexeme('right bracket', ']'),
+            Lexeme('number', -123.2),
+            Lexeme('right bracket', ']')
         ]
         output = parse_list(inputted)
         self.assertEqual(expected, output)
@@ -59,7 +77,7 @@ class TestParse(unittest.TestCase):
     def test_parse_list_failure(self):
         expected = None
         inputted = []
-        output = parse_value(inputted)
+        output = parse_list(inputted)
         self.assertEqual(expected, output)
 
 

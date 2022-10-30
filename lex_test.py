@@ -4,6 +4,7 @@ from lex import Lexeme, lex
 
 
 class TestLexer(unittest.TestCase):
+
     def test_some_keywords(self):
         input_string = 'var if or nil'
         lexemes = lex(input_string)
@@ -11,7 +12,7 @@ class TestLexer(unittest.TestCase):
             Lexeme('keyword', 'var'),
             Lexeme('keyword', 'if'),
             Lexeme('keyword', 'or'),
-            Lexeme('keyword', None)
+            Lexeme('nil', None)
         ]
         self.assertEqual(lexemes, expected)
 
