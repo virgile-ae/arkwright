@@ -1,24 +1,38 @@
 from parse import SExpr, Value
-from lex import keywords, symbols
+from lex import keywords
 
+# A tree can be an S-Expression or a Value
 Tree = SExpr | Value
 
-KEYWORDS = [y for (x, y) in [*keywords, *symbols]]
+
+# All the keywords which are handled here
+unescaped_symbols = [
+    '=', '>', '>=', '<', '<=', '!=',
+    '+', '-', '*', '/'
+]
+KEYWORDS = [y for _, y in keywords] + unescaped_symbols
 
 
-def transform(trees: list[Tree]):
-    return
+# a consists of a list of trees which evaluate to expressions.
+def transform(trees: list[Tree]) -> str:
+    """Transforms the entire AST into JS code."""
+    return '\n'.join(map(transform_tree, trees))
 
 
-def transform_tree(tree: Tree):
-    if type(tree) == SExpr:
-        return transform_keyword_expr(tree)    \
-            if tree.identifier in KEYWORDS     \
-            else transform_function_call(tree)
+def transform_tree(tree: Tree) -> str:
+    """Transforms one expression from the AST into JS code."""
+    if isinstance(tree, SExpr):
+        if tree.identifier in KEYWORDS:
+            return transform_keyword_expr(tree)
+        return transform_function_call(tree)
     return transform_value(tree)  # type(tree) == Value
 
 
-def transform_keyword_expr(tree):
+def transform_keyword_expr(tree: SExpr) -> str:
+    """
+    Transforms a keyword expression into JS code by distributing
+    various keyword expressions to specific functions.
+    """
     keyword = tree.identifier
 
     if keyword == 'var':
@@ -36,51 +50,65 @@ def transform_keyword_expr(tree):
     if keyword in ['+', '-', '*', '/']:
         return transform_bin_op(tree)
 
+    raise RuntimeError(f"expected keyword, got '{keyword}'")
 
-def transform_value(tree: Value):
-    if tree.type == 'identifier':
+
+def transform_value(tree: Value) -> str:
+    if tree.type == 'variable':
         return transform_identifier(tree)
     return transform_constant(tree)
 
 
-def transform_constant(tree: Value):
+def transform_constant(tree: Value) -> str:
+    """Transforms literal values."""
     if tree.type not in ['number', 'string', 'boolean', 'nil', 'list']:
-        return
+        raise RuntimeError(f"expected constant, got '{tree.type}'")
     if tree.type == 'list':
-        return str(list(map(transform_tree, tree)))
+        return '[ ' + ', '.join(
+            [transform_tree(x) for x in tree.value]  # type: ignore
+        ) + ' ]'
     if tree.type == 'nil':
         return 'null'
     if tree.type == 'string':
         return f'"{tree.value}"'
-    
+
     return str(tree.value).lower()
 
-def transform_identifier(tree: Value):
-    if tree.type != 'identifier':
-        return
-    return tree.value
+
+def transform_identifier(tree: Value) -> str:
+    if tree.type != 'variable':
+        raise RuntimeError(f"expected identifier, got '{tree.type}'")
+    return str(tree.value)
 
 
-def transform_function_definition(tree: SExpr):
-    if len(tree.arguments) != 3:
-        return
-    if tree.arguemnts[0].type != 'identifier':
-        raise RuntimeError() # TODO
-    if tree.arguments[1].type != 'list':
-        raise RuntimeError() # TODO
-    
-    return
+def transform_function_definition(tree: SExpr) -> str:
+    if tree.identifier != 'func':
+        raise RuntimeError(f"expected func, got '{tree.identifier}'")
+    if (num := len(tree.arguments)) != 3:
+        raise RuntimeError(
+            'func expression takes 3 arguments: an identifier, a list of arguments,'
+            f' and the function body, but {num} were provided')
+    if tree.arguments[0].type != 'variable' or tree.arguments[1].type != 'list':
+        raise RuntimeError(
+            'func expression takes 3 arguments: an identifier, a list of arguments, and the function body')
+
+# TODO
+    arguments = ', '.join([transform_identifier(i)
+                          for i in tree.arguments[1].value])
+    return_expr = transform_tree(tree.arguments[2])
+
+    return f'function {tree.arguments[0].value}({arguments})' + ' { return ' + return_expr + ' };\n'
 
 
-def transform_function_call(tree: SExpr):
+def transform_function_call(tree: SExpr) -> str:
     args = map(transform_tree, tree.arguments)
     args = ', '.join(args)
-    return f'{tree.identifier}({args})'
+    return f' {tree.identifier}({args})'
 
 
-def transform_var(tree: SExpr):
+def transform_var(tree: SExpr) -> str:
     if tree.identifier != 'var':
-        return
+        raise RuntimeError(f"expected var expression, got '{tree.identifier}'")
 
     if len(tree.arguments) != 2 or tree.arguments[0].type != 'variable':
         raise RuntimeError(
@@ -93,20 +121,23 @@ def transform_var(tree: SExpr):
     return f'\nvar {iden} = {value};'
 
 
-def transform_if_expr(tree: SExpr):
+def transform_if_expr(tree: SExpr) -> str:
     if tree.identifier != 'if':
-        return
+        raise RuntimeError(f"expected if expression, got '{tree.identifier}'")
 
     if len(tree.arguments) != 3:
         raise RuntimeError(
-            f"'if' keyword takes 3 arguments, a condition, and 2 expressions, but {len(tree.arguments)} were provided"
+            "'if' keyword takes 3 arguments: a condition, and 2 expressions,"
+            f" but {len(tree.arguments)} were provided"
         )
 
-    return f'({transform_tree(tree.arguments[0])} ? {transform_tree(tree.arguments[1])} : {transform_tree(tree.arguments[2])})'
+    return f'({transform_tree(tree.arguments[0])} ? ' \
+        f'{transform_tree(tree.arguments[1])} : {transform_tree(tree.arguments[2])})'
 
-def transform_unary_op(tree: SExpr):
+
+def transform_unary_op(tree: SExpr) -> str:
     if tree.identifier != 'not':
-        return
+        raise RuntimeError(f"expected unary operator, got '{tree.identifier}'")
 
     if len(tree.arguments) != 1:
         raise RuntimeError(
@@ -115,43 +146,46 @@ def transform_unary_op(tree: SExpr):
     return f'!({transform_tree(tree.arguments[0])})'
 
 
-def transform_bin_op(tree: SExpr):
-    if tree.identifier not in [r'\*', r'\+', '/', '-']:
-        return
+def transform_bin_op(tree: SExpr) -> str:
+    if tree.identifier not in ['*', '+', '/', '-']:
+        raise RuntimeError(
+            f"expected binary operator, got '{tree.identifier}'")
 
-    if len(tree.arguments) != 1:
+    if len(tree.arguments) != 2:
         raise RuntimeError(
             f"'{tree.identifier}' takes 2 arguments, but '{len(tree.arguments)}' were provided"
         )
-    op = {
-        r'\*': '*',
-        '/': '/',
-        r'\+': '+',
-        '-': '-',
-    }[tree.identifier]
 
     left = transform_tree(tree.arguments[0])
     right = transform_tree(tree.arguments[1])
-    
-    return f'({left} {op} {right})'
+
+    return f'({left} {tree.identifier} {right})'
 
 
-def transform_bool_op(tree: SExpr):
+def transform_bool_op(tree: SExpr) -> str:
     if len(tree.arguments) < 2:
-        raise RuntimeError(f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided")
-    
-    if tree.identifier in ['and', 'or', '=']:
-        args = map(transform_tree, )
-        
-        return
-    return
+        raise RuntimeError(
+            f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided")
+
+    if tree.identifier in ['and', 'or']:
+        args = [transform_tree(i) for i in tree.arguments]
+        op = {
+            'and': ' && ',
+            'or': ' || '
+        }
+        return '(' + op[tree.identifier].join(args) + ')'
+    # == is the only one which isn't the same in js
+    op = tree.identifier if tree.identifier != '=' else '=='
+    return f'({transform_tree(tree.arguments[0])}' \
+        f' {op} {transform_tree(tree.arguments[1])})'
 
 
-def transform_io(tree: SExpr):
+def transform_io(tree: SExpr) -> str:
     if tree.identifier == 'print':
-        arguments = ', '.join(map(tree_transform, tree.arguments))
+        arguments = ', '.join(map(transform_tree, tree.arguments))
         return f'console.log({arguments})'
-    elif len(tree.arguments) != 1:
-        raise RuntimeError(f"'input' function takes 1 argument but {len(tree.arguments)} were provided")
-    else:
-        return f'prompt({transform_tree(tree.arguments[0])})'
+
+    if len(tree.arguments) != 1:
+        raise RuntimeError(
+            f"'input' function takes 1 argument but {len(tree.arguments)} were provided")
+    return f' prompt({transform_tree(tree.arguments[0])})'

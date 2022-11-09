@@ -2,15 +2,12 @@ from lex import Lexeme, lex
 from parse import parse, parse_expression, parse_sexpr, parse_value, parse_list, Value, SExpr
 import unittest
 
-# TODO: finish writing tests
-
-
 class TestParse(unittest.TestCase):
 
     def test_parse(self):
         expected = [
-            SExpr(Value('keyword', 'print'),[ Value('string', 'hello')]),
-            SExpr(Value('variable', 'map'), [
+            SExpr('print', [ Value('string', 'hello') ]),
+            SExpr('map', [
                 Value('variable', 'fn'),
                 Value('list', [
                     Value('boolean', True),

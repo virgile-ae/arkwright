@@ -4,7 +4,7 @@ from lex import Lexeme
 
 @dataclass
 class Value:
-    """Values can be variables or literals."""
+    """Values represent variables or literals."""
     type: str
     value: object
 
@@ -12,15 +12,18 @@ class Value:
         return str(self.value)
 
     def __eq__(self, other) -> bool:
-        if type(self) == type(other):
+        if isinstance(other, Value):
             return self.value == other.value and self.type == other.type
-        else:
-            raise TypeError
+        raise TypeError
 
 
 @dataclass
 class SExpr:
-    identifier: Value
+    """
+    S-Expressions make up a program.
+    They are used to call functions and to take advantage of keywords.
+    """
+    identifier: str
     arguments: list
 
     def __repr__(self) -> str:
@@ -28,9 +31,9 @@ class SExpr:
         return f'({self.identifier} {args})'
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other) and            \
-                self.identifier == other.identifier and \
-                self.arguments == other.arguments
+        return isinstance(other, SExpr) and            \
+            self.identifier == other.identifier and \
+            self.arguments == other.arguments
 
 
 # An expression is something which evaluates to something,
@@ -38,6 +41,7 @@ class SExpr:
 Expression = SExpr | Value
 
 # object can be a sexpr, literal, keyword, variable
+# None represents the failure of a parse function
 ParseResult = tuple[object, list[Lexeme]] | None
 
 
@@ -63,7 +67,8 @@ def parse_expression(lexemes: list[Lexeme]) -> ParseResult:
 
 def parse_sexpr(lexemes: list[Lexeme]) -> ParseResult:
     if not lexemes or lexemes[0].type != 'left paren':
-        return  # signals failure (thing which is to be parsed isn't an s expression)
+        # signals failure (thing which is to be parsed isn't an s expression)
+        return
 
     if lexemes[1].type not in ['variable', 'keyword', 'symbol']:
         # if it isn't an identifier
@@ -88,7 +93,18 @@ def parse_sexpr(lexemes: list[Lexeme]) -> ParseResult:
     return SExpr(identifier.value, arguments), lexemes[1:]
 
 
+def parse_value(lexemes: list[Lexeme]) -> ParseResult:
+    if not lexemes or lexemes[0].type not in [
+            'number', 'string', 'boolean', 'variable', 'nil', 'left bracket'
+    ]:
+        return
+    if lexemes[0].type == 'left bracket':
+        return parse_list(lexemes)
+    return Value(lexemes[0].type, lexemes[0].value), lexemes[1:]
+
+
 def parse_list(lexemes: list[Lexeme]) -> ParseResult:
+    """Parses lexemes which make up a list into a Value with the """
     if not lexemes or lexemes[0].type != 'left bracket':
         return
 
@@ -109,34 +125,9 @@ def parse_list(lexemes: list[Lexeme]) -> ParseResult:
     return Value('list', elements), lexemes[1:]
 
 
-def parse_value(lexemes: list[Lexeme]) -> ParseResult:
-    if not lexemes or lexemes[0].type not in [
-            'number', 'string', 'boolean', 'variable', 'nil', 'left bracket'
-    ]:
-        return
-    if lexemes[0].type == 'left bracket':
-        return parse_list(lexemes)
-    return Value(lexemes[0].type, lexemes[0].value), lexemes[1:]
-
-def parse_list(lexemes: list[Lexeme]) -> ParseResult:
-    if not lexemes or lexemes[0].type != 'left bracket':
-        return
-
-    elements = []
-    lexemes = lexemes[1:]
-    while result := parse_expression(lexemes):
-        lexemes = result[1]
-        elements.append(result[0])
-
-    if not lexemes:
-        raise RuntimeError(f'unexpected EOF: expected right bracket')
-    elif lexemes[0].type != 'right bracket':
-        raise RuntimeError(f"unexpected lexeme: '{lexemes[0].value}', expected right bracket")
-
-    return elements, lexemes[1:]
-
 # PARSER
 def parse(lexemes: list[Lexeme]) -> list[Expression]:
+    """Parses the lexemes into an abstract syntax tree."""
     expressions = []
     while result := parse_expression(lexemes):
         lexemes = result[1]

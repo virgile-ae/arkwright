@@ -5,15 +5,8 @@ _keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not']
 keywords = [('keyword', x) for x in _keywords]
 
 _symbols = [
-    '=',
-    '>',
-    '>=',
-    '<',
-    '<=',
-    r'\+',
-    '-',
-    r'\*',
-    '/',
+    '=', r'!=', '>=', '>', '<=', '<',
+    r'\+', '-', r'\*', '/'
 ]
 symbols = [('symbol', x) for x in _symbols]
 
@@ -55,7 +48,6 @@ class Lexeme:
 # LEXER
 def lex(input_string: str) -> list[Lexeme]:
     """Groups characters into lexemes so they are easier to parse."""
-    input_string = input_string
     line = 1
     offset = 0
     tokens = []
@@ -68,14 +60,15 @@ def lex(input_string: str) -> list[Lexeme]:
                 elif name == 'string':
                     tokens.append(Lexeme(name, m[1:-1], line, offset))
                 elif name == 'boolean':
-                    tokens.append(Lexeme(name, eval(m.capitalize()), line, offset))
+                    tokens.append(
+                        Lexeme(name, eval(m.capitalize()), line, offset))
                 elif name == 'nil':
                     tokens.append(Lexeme(name, None, line, offset))
                 elif name == 'newline':
                     line += 1
                     offset = 0
                 elif name == 'whitespace':
-                    pass # so it doesnt get added
+                    pass  # so it doesn't get added
                 else:
                     tokens.append(Lexeme(name, m, line, offset))
                 input_string = input_string[len(m):]

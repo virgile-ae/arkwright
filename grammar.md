@@ -1,4 +1,8 @@
-# How to read the grammar
+
+# Grammar
+
+## How to read the grammar
+
 - The grammar is similar to PCRE's grammar.
 - `#` for comments.
 - `;` to end each parsing expression.
@@ -13,12 +17,14 @@
 - `'` indicates the start and end of a string of text which is to be parsed (terminal symbols).
 - `<` and `>` indicate the start and end of the variable of a parsing expression (nonterminal symbols).
 
-# Other info
+## Other info
+
 - The builtin functions will be treated as keywords by the interpreter.
 - Whitespace only delimits arguments in s-expressions (isn't otherwise significant)
 
-# The grammar
-```
+## The grammar
+
+```python
 expression = <s_expr> | <list> | <value> ;
 
 s_expr = '(' <identifier> <expression>* ')'
@@ -47,7 +53,7 @@ keyword =
     'if' |
     'func' |
     '+' | '-' | '*' | '/' |
-    'and' | 'or' | 'not' | '='
+    'and' | 'or' | 'not' | '=' | '!=' | '>=' | '<=' | '>' | '<'
     ;
 
 number = ('0'..'9')+ ("." ('0'..'9')+)? ;

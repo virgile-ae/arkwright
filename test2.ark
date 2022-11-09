@@ -1,0 +1,3 @@
+(print "hello world")
+
+(if (and (< 2 4)))
