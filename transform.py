@@ -49,6 +49,8 @@ def transform_keyword_expr(tree: SExpr) -> str:
         return transform_bool_op(tree)
     if keyword in ['+', '-', '*', '/']:
         return transform_bin_op(tree)
+    if keyword == 'nth':
+        return transform_index(tree)
 
     raise RuntimeError(f"expected keyword, got '{keyword}'")
 
@@ -79,6 +81,22 @@ def transform_identifier(tree: Value) -> str:
     if tree.type != 'variable':
         raise RuntimeError(f"expected identifier, got '{tree.type}'")
     return str(tree.value)
+
+
+def transform_index(tree: SExpr) -> str:
+    if len(tree.arguments) != 2:
+        raise RuntimeError(
+            f"'nth' function takes 2 arguments: a list and an index")
+
+    if tree.arguments[0].type not in ['variable', 'list', 'string']:
+        raise RuntimeError(
+            "'nth' function takes a list or variable as its first argument")
+
+    if tree.arguments[1].type not in ['variable', 'number']:
+        raise RuntimeError(
+            "'nth' function takes a number or variable as its second argument")
+
+    return f' {transform_tree(tree.arguments[0])}[{transform_tree(tree.arguments[1])}]'
 
 
 def transform_function_definition(tree: SExpr) -> str:

@@ -34,6 +34,12 @@ class TestTransform(unittest.TestCase):
         result = compilation.compile_to_js(inpt)
         self.assertEqual(expected, result)
 
+    def test_index(self):
+        expected = ' [ 1.0, 2.0, 3.0, 4.0 ][0.0]'
+        inpt = '(nth [1 2 3 4] 0)'
+        result = compilation.compile_to_js(inpt)
+        self.assertEqual(expected, result)
+
 
 if __name__ == '__main__':
     unittest.main()

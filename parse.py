@@ -31,8 +31,8 @@ class SExpr:
         return f'({self.identifier} {args})'
 
     def __eq__(self, other) -> bool:
-        return isinstance(other, SExpr) and            \
-            self.identifier == other.identifier and \
+        return isinstance(other, SExpr) and        \
+            self.identifier == other.identifier and\
             self.arguments == other.arguments
 
 
