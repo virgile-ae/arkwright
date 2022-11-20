@@ -192,8 +192,12 @@ def transform_bool_op(tree: SExpr) -> str:
             'or': ' || '
         }
         return '(' + op[tree.identifier].join(args) + ')'
-    # == is the only one which isn't the same in js
-    op = tree.identifier if tree.identifier != '=' else '=='
+
+    op = {
+        '=': '===', # strict equality operator
+        '!=': '!==', # strict inequality operator
+    }
+    op = tree.identifier if tree.identifier not in op.keys() else op[tree.identifier]
     return f'({transform_tree(tree.arguments[0])}' \
         f' {op} {transform_tree(tree.arguments[1])})'
 
