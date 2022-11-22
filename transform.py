@@ -4,12 +4,8 @@ from lex import keywords
 # A tree can be an S-Expression or a Value
 Tree = SExpr | Value
 
-
 # All the keywords which are handled here
-unescaped_symbols = [
-    '=', '>', '>=', '<', '<=', '!=',
-    '+', '-', '*', '/'
-]
+unescaped_symbols = ['=', '>', '>=', '<', '<=', '!=', '+', '-', '*', '/']
 KEYWORDS = [y for _, y in keywords] + unescaped_symbols
 
 
@@ -51,6 +47,8 @@ def transform_keyword_expr(tree: SExpr) -> str:
         return transform_bin_op(tree)
     if keyword == 'nth':
         return transform_index(tree)
+    if keyword == 'set':
+        return transform_set(tree)
 
     raise RuntimeError(f"expected keyword, got '{keyword}'")
 
@@ -66,9 +64,9 @@ def transform_constant(tree: Value) -> str:
     if tree.type not in ['number', 'string', 'boolean', 'nil', 'list']:
         raise RuntimeError(f"expected constant, got '{tree.type}'")
     if tree.type == 'list':
-        return '[ ' + ', '.join(
-            [transform_tree(x) for x in tree.value]  # type: ignore
-        ) + ' ]'
+        return '[ ' + ', '.join([transform_tree(x)
+                                 for x in tree.value]  # type: ignore
+                                ) + ' ]'
     if tree.type == 'nil':
         return 'null'
     if tree.type == 'string':
@@ -108,11 +106,13 @@ def transform_function_definition(tree: SExpr) -> str:
             f' and the function body, but {num} were provided')
     if tree.arguments[0].type != 'variable' or tree.arguments[1].type != 'list':
         raise RuntimeError(
-            'func expression takes 3 arguments: an identifier, a list of arguments, and the function body')
+            'func expression takes 3 arguments: an identifier, a list of arguments, and the function body'
+        )
+
 
 # TODO
-    arguments = ', '.join([transform_identifier(i)
-                          for i in tree.arguments[1].value])
+    arguments = ', '.join(
+        [transform_identifier(i) for i in tree.arguments[1].value])
     return_expr = transform_tree(tree.arguments[2])
 
     return f'function {tree.arguments[0].value}({arguments})' + ' { return ' + return_expr + ' };\n'
@@ -146,8 +146,7 @@ def transform_if_expr(tree: SExpr) -> str:
     if len(tree.arguments) != 3:
         raise RuntimeError(
             "'if' keyword takes 3 arguments: a condition, and 2 expressions,"
-            f" but {len(tree.arguments)} were provided"
-        )
+            f" but {len(tree.arguments)} were provided")
 
     return f'({transform_tree(tree.arguments[0])} ? ' \
         f'{transform_tree(tree.arguments[1])} : {transform_tree(tree.arguments[2])})'
@@ -183,21 +182,20 @@ def transform_bin_op(tree: SExpr) -> str:
 def transform_bool_op(tree: SExpr) -> str:
     if len(tree.arguments) < 2:
         raise RuntimeError(
-            f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided")
+            f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided"
+        )
 
     if tree.identifier in ['and', 'or']:
         args = [transform_tree(i) for i in tree.arguments]
-        op = {
-            'and': ' && ',
-            'or': ' || '
-        }
+        op = {'and': ' && ', 'or': ' || '}
         return '(' + op[tree.identifier].join(args) + ')'
 
     op = {
-        '=': '===', # strict equality operator
-        '!=': '!==', # strict inequality operator
+        '=': '===',  # strict equality operator
+        '!=': '!==',  # strict inequality operator
     }
-    op = tree.identifier if tree.identifier not in op.keys() else op[tree.identifier]
+    op = tree.identifier if tree.identifier not in op.keys() else op[
+        tree.identifier]
     return f'({transform_tree(tree.arguments[0])}' \
         f' {op} {transform_tree(tree.arguments[1])})'
 
@@ -209,5 +207,15 @@ def transform_io(tree: SExpr) -> str:
 
     if len(tree.arguments) != 1:
         raise RuntimeError(
-            f"'input' function takes 1 argument but {len(tree.arguments)} were provided")
+            f"'input' function takes 1 argument but {len(tree.arguments)} were provided"
+        )
     return f' prompt({transform_tree(tree.arguments[0])})'
+
+
+def transform_set(tree: SExpr) -> str:
+    if len(tree.arguments) != 2:
+        raise RuntimeError(
+            f"'set' function takes 2 arguments but {len(tree.arguments)} were provided"
+        )
+    # TODO: Type validation
+    return f'\n{transform_tree(tree.arguments[0])} = {transform_tree(tree.arguments[1])};\n'

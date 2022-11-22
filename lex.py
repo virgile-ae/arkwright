@@ -1,7 +1,7 @@
 import re
 
 # Token name, regex
-_keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not', 'nth']
+_keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not', 'nth', 'set']
 keywords = [('keyword', x) for x in _keywords]
 
 _symbols = [
@@ -10,7 +10,7 @@ _symbols = [
 ]
 symbols = [('symbol', x) for x in _symbols]
 
-patterns = [
+patterns = [ 
     ['left paren', r'\('],
     ['right paren', r'\)'],
     ['left bracket', r'\['],
