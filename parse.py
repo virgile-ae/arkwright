@@ -27,7 +27,7 @@ class SExpr:
     """
     S-Expressions make up most of a program. They are used to call functions and to take advantage of keywords.
     """
-    identifier: str  # the first part of the s-expression. it indicates 
+    identifier: str  # the first part of the s-expression. it indicates
     arguments: list
     line: int
 
