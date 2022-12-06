@@ -1,9 +1,15 @@
 
 # Grammar
 
-## How to read the grammar
+## What is a grammar?
 
-- The grammar is similar to PCRE's grammar.
+- A grammar is a formal specification for a programming language.
+- It describes how all functioning programs in a programming language can be constructed (in essence the programming language's syntax).
+- It is used to help build the lexer and parser as terminal symbols can be mapped to lexemes and non-terminal symbols can be mapped to functions in a recursive descent parser.
+
+## How to read the grammar?
+
+- The grammar is a cross between EBNF and PCRE (although the latter is commonly used for regular expressions, I found it quite suitable for writing a grammar)
 - `#` for comments.
 - `;` to end each parsing expression.
 - `+` indicates one or more.
@@ -20,7 +26,8 @@
 ## Other info
 
 - The builtin functions will be treated as keywords by the interpreter.
-- Whitespace only delimits arguments in s-expressions (isn't otherwise significant)
+- Whitespace only delimits arguments in s-expressions (it isn't otherwise significant)
+- The grammar is referentially transparent (it would be the same if all uses of non-terminals were replaced with their value, although this would be impractical as it would be very difficult to read.)
 
 ## The grammar
 
@@ -47,15 +54,9 @@ list = '[' expression* ']' ;
 # value which can hold a function or data
 variable = ( 'a'..'z' | 'A'..'Z' | '_' )+ ;
 
-keyword =
-    'var' |
-    'input' | 'print' |
-    'if' |
-    'func' |
-    'nth' |
-    '+' | '-' | '*' | '/' |
-    'and' | 'or' | 'not' | '=' | '!=' | '>=' | '<=' | '>' | '<'
-    ;
+# these are all the keywords specified in the lexer (see _keywords)
+# they have been emitted for brevity
+keyword = ... ;
 
 number = ('0'..'9')+ ("." ('0'..'9')+)? ;
 

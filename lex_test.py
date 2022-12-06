@@ -1,15 +1,19 @@
 import unittest
 
 from lex import Lexeme, lex
+from errors import ErrorHandler
+
+
+error_handler = ErrorHandler()
 
 
 class TestLexer(unittest.TestCase):
 
     def test_some_keywords(self):
-        input_string = 'var if or nil'
-        lexemes = lex(input_string)
+        input_string = 'let if or nil'
+        lexemes = lex(input_string, error_handler)
         expected = [
-            Lexeme('keyword', 'var'),
+            Lexeme('keyword', 'let'),
             Lexeme('keyword', 'if'),
             Lexeme('keyword', 'or'),
             Lexeme('nil', None)
@@ -18,7 +22,7 @@ class TestLexer(unittest.TestCase):
 
     def test_some_patterns(self):
         input_string = 'true "hi 123" 123.23 abra'
-        lexemes = lex(input_string)
+        lexemes = lex(input_string, error_handler)
         expected = [
             Lexeme('boolean', True),
             Lexeme('string', 'hi 123'),
@@ -29,7 +33,7 @@ class TestLexer(unittest.TestCase):
 
     def test_delimiters(self):
         input_string = '( [ ] )'
-        lexemes = lex(input_string)
+        lexemes = lex(input_string, error_handler)
         expected = [
             Lexeme('left paren', '('),
             Lexeme('left bracket', '['),
@@ -40,7 +44,13 @@ class TestLexer(unittest.TestCase):
 
     def test_whitespace(self):
         input_string = '\n\n  \t\t'
-        lexemes = lex(input_string)
+        lexemes = lex(input_string, error_handler)
+        expected = []
+        self.assertEqual(lexemes, expected)
+
+    def test_comment(self):
+        input_string = '// some helpful comment'
+        lexemes = lex(input_string, error_handler)
         expected = []
         self.assertEqual(lexemes, expected)
 

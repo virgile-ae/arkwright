@@ -1,0 +1,8 @@
+(print "hello world")
+
+(const PI 3.14)
+
+(func area_of_circle [radius] 
+    (* PI radius radius))
+
+(print (area_of_circle 2))

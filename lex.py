@@ -1,7 +1,10 @@
 import re
 
+from errors import ErrorHandler
+
 # Token name, regex
-_keywords = ['var', 'input', 'print', 'if', 'func', 'and', 'or', 'not', 'nth', 'set']
+_keywords = ['let', 'const', 'input', 'print', 'if',
+             'func', 'and', 'or', 'not', 'nth', 'do', 'set']
 keywords = [('keyword', x) for x in _keywords]
 
 _symbols = [
@@ -19,12 +22,14 @@ patterns = [
     ['boolean', r'true|false'],
     ['nil', r'nil'],
     ['string', r'"(.*)"'],
-    ['variable', r'[a-zA-Z_]+'],
+    ['variable', r'[a-zA-Z_\.]+'],
+    # Includes '.' to allow indexing so that object properties and methods can be accessed
     ['newline', r'\r(\n)?|\n'],
     ['whitespace', r'(\t| )+'],
+    ['comment', r'//.*'],  # . matches everything except a newline
 ]
 
-# compiling all of the regex patterns for the
+# compiling all of the regex patterns
 LEXEMES = [(name, re.compile(f'({pattern})'))
            for [name, pattern] in [*keywords, *patterns, *symbols]]
 
@@ -46,13 +51,14 @@ class Lexeme:
 
 
 # LEXER
-def lex(input_string: str) -> list[Lexeme]:
+def lex(input_string: str, error_handler: ErrorHandler) -> list[Lexeme]:
     """Groups characters into lexemes so they are easier to parse."""
     line = 1
     offset = 0
     tokens = []
     while len(input_string):
         for [name, pattern] in LEXEMES:
+            # if the regex pattern matches
             if matches := pattern.match(input_string):
                 m = str(matches.groups(1)[0])
                 if name == 'number':
@@ -67,15 +73,14 @@ def lex(input_string: str) -> list[Lexeme]:
                 elif name == 'newline':
                     line += 1
                     offset = 0
-                elif name == 'whitespace':
+                elif name in ['whitespace', 'comment']:
                     pass  # so it doesn't get added
                 else:
                     tokens.append(Lexeme(name, m, line, offset))
                 input_string = input_string[len(m):]
                 offset += len(m)
                 break
-        else:
-            raise RuntimeError(
-                f"unrecognized lexeme on line {line}: {input_string.splitlines()[0]}"
-            )
+        else:  # if all the patterns have been tried and have failed
+            error_handler.new_error(
+                f"unrecognized lexeme: {input_string.splitlines()[0]}", line)
     return tokens

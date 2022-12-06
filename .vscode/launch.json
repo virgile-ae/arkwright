@@ -5,11 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Single file",
             "type": "python",
             "request": "launch",
             "program": "main.py",
-            "args": "test.ark",
+            "args": "./sample/test.ark",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Two files",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": "./sample/test2.ark ./sample/test.ark",
             "console": "integratedTerminal",
             "justMyCode": true
         }
