@@ -1,5 +1,5 @@
 from errors import ErrorHandler
-from lex import keywords
+from lex import KEYWORDS
 from parse import SExpr, Value
 
 
@@ -10,7 +10,7 @@ Tree = SExpr | Value
 
 # All the keywords which are handled here
 unescaped_symbols = ['=', '>', '>=', '<', '<=', '!=', '+', '-', '*', '/']
-KEYWORDS = [y for _, y in keywords] + unescaped_symbols
+KEYWORDS += unescaped_symbols
 
 
 # a consists of a list of trees which evaluate to expressions.

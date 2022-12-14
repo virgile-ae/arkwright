@@ -3,9 +3,9 @@ import re
 from errors import ErrorHandler
 
 # Token name, regex
-_keywords = ['let', 'const', 'input', 'print', 'if',
-             'func', 'and', 'or', 'not', 'nth', 'do', 'set']
-keywords = [('keyword', x) for x in _keywords]
+KEYWORDS = ['let', 'const', 'input', 'print', 'if',
+            'func', 'and', 'or', 'not', 'nth', 'do', 'set']
+keywords = [('keyword', f'\b{x}\b') for x in KEYWORDS]
 
 _symbols = [
     '=', r'!=', '>=', '>', '<=', '<',
@@ -34,7 +34,6 @@ LEXEMES = [(name, re.compile(f'({pattern})'))
 
 
 class Lexeme:
-
     def __init__(self, type: str, value, line: int = 0, offset: int = 0) -> None:
         self.type = type
         self.value = value

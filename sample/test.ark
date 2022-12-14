@@ -1,11 +1,26 @@
+// Here is a sample program to showcase the features of
+// my programming language.
+
 // Factorial function
 (func factorial [n]
   (if (!= n 1)
+    // If condition evaluates to true
     (* n (factorial (- n 1)))
+    // Else
     n ))
 
 (print (factorial 4))
 
+// Mutating a variable
 (let counter 0)
 (set counter (+ counter 1))
 (print counter)
+
+
+(func do_n_times [fn n]
+  (do
+    (let array_of_n (Array n))
+    (set array_of_n (array_of_n.fill)) // get an array of size n
+    (array_of_n.map fn))) // iterate through that array
+
+(do_n_times (func _ [] (print "hello world")) 4)
