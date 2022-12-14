@@ -51,15 +51,12 @@ def transform_keyword_expr(tree: SExpr) -> str:
         return transform_bin_op(tree)
     if keyword == 'nth':
         return transform_index(tree)
-<<<<<<< HEAD
     if keyword == 'do':
         return transform_do_statement(tree)
     if keyword in ['let', 'const']:
         return transform_assignment(tree)
-=======
     if keyword == 'set':
         return transform_set(tree)
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
 
     error_handler.new_error(
         f"unexpected keyword: '{keyword}'", tree.arguments[0].line, True)
@@ -78,15 +75,9 @@ def transform_constant(tree: Value) -> str:
         error_handler.new_error(
             f"expected constant, got '{tree.type}'", tree.line, True)
     if tree.type == 'list':
-<<<<<<< HEAD
         return '[' + ', '.join(
             [transform_tree(x) for x in tree.value]  # type: ignore
         ) + ']'
-=======
-        return '[ ' + ', '.join([transform_tree(x)
-                                 for x in tree.value]  # type: ignore
-                                ) + ' ]'
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
     if tree.type == 'nil':
         return 'null'
     if tree.type == 'string':
@@ -131,23 +122,12 @@ def transform_function_definition(tree: SExpr) -> str:
                                 f' and the function body, but {num} were provided', tree.line, True)
         return ''
     if tree.arguments[0].type != 'variable' or tree.arguments[1].type != 'list':
-<<<<<<< HEAD
         error_handler.new_error(
             'func expression takes 3 arguments: an identifier, a list of arguments, and the function body', tree.line, True)
         return ''
 
     arguments = ', '.join([transform_identifier(i)
                           for i in tree.arguments[1].value])
-=======
-        raise RuntimeError(
-            'func expression takes 3 arguments: an identifier, a list of arguments, and the function body'
-        )
-
-
-# TODO
-    arguments = ', '.join(
-        [transform_identifier(i) for i in tree.arguments[1].value])
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
     return_expr = transform_tree(tree.arguments[2])
 
     return f'function {tree.arguments[0].value}({arguments})' + ' {\n  return ' + return_expr + '\n}'
@@ -166,15 +146,9 @@ def transform_if_expr(tree: SExpr) -> str:
         return ''
 
     if len(tree.arguments) != 3:
-<<<<<<< HEAD
         error_handler.new_error("'if' keyword takes 3 arguments: a condition, and 2 expressions,"
                                 f" but {len(tree.arguments)} were provided", tree.line, True)
         return ''
-=======
-        raise RuntimeError(
-            "'if' keyword takes 3 arguments: a condition, and 2 expressions,"
-            f" but {len(tree.arguments)} were provided")
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
 
     # use ternary expression so that it evaluates to something
     return f'({transform_tree(tree.arguments[0])} ? ' \
@@ -213,43 +187,21 @@ def transform_bin_op(tree: SExpr) -> str:
 
 def transform_bool_op(tree: SExpr) -> str:
     if len(tree.arguments) < 2:
-<<<<<<< HEAD
         error_handler.new_error(
             f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided", tree.line, True)
         return ''
-=======
-        raise RuntimeError(
-            f"'{tree.identifier}' expects 2 arguments but {len(tree.arguments)} were provided"
-        )
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
 
     # cases where the identifier isn't the same in JS
-    if tree.identifier in ['and', 'or', '=']:
-        args = [transform_tree(i) for i in tree.arguments]
-<<<<<<< HEAD
-        op = {
-            'and': ' && ',
-            'or': ' || ',
-            '=': '==',
-        }
-        return '(' + op[tree.identifier].join(args) + ')'
-<<<<<<< HEAD
-    # == is the only one which isn't the same in js
-    op = tree.identifier if tree.identifier != '=' else '=='
-=======
-    # otherwise the identifier is the same as the operator in JS
-=======
-        op = {'and': ' && ', 'or': ' || '}
-        return '(' + op[tree.identifier].join(args) + ')'
+    args = [transform_tree(i) for i in tree.arguments]
 
     op = {
         '=': '===',  # strict equality operator
         '!=': '!==',  # strict inequality operator
+        'and': ' && ',
+        'or': ' || ',
     }
-    op = tree.identifier if tree.identifier not in op.keys() else op[
-        tree.identifier]
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
->>>>>>> 24fde64 (reverted)
+    op = tree.identifier if tree.identifier not in op.keys(
+    ) else op[tree.identifier]
     return f'({transform_tree(tree.arguments[0])}' \
         f' {tree.identifier} {transform_tree(tree.arguments[1])})'
 
@@ -260,7 +212,6 @@ def transform_io(tree: SExpr) -> str:
         return f'console.log({arguments})'
 
     if len(tree.arguments) != 1:
-<<<<<<< HEAD
         error_handler.new_error(
             f"'input' function takes 1 argument but {len(tree.arguments)} were provided", tree.line, True)
         return ''
@@ -287,24 +238,12 @@ def transform_assignment(tree: SExpr) -> str:
     value = transform_tree(tree.arguments[1])
 
     return f'{tree.identifier} {iden} = {value};'
-<<<<<<< HEAD
-=======
-=======
-        raise RuntimeError(
-            f"'input' function takes 1 argument but {len(tree.arguments)} were provided"
-        )
-    return f' prompt({transform_tree(tree.arguments[0])})'
->>>>>>> 24fde64 (reverted)
 
 
 def transform_set(tree: SExpr) -> str:
     if len(tree.arguments) != 2:
-        raise RuntimeError(
-            f"'set' function takes 2 arguments but {len(tree.arguments)} were provided"
-        )
-    # TODO: Type validation
-    return f'\n{transform_tree(tree.arguments[0])} = {transform_tree(tree.arguments[1])};\n'
-<<<<<<< HEAD
-=======
->>>>>>> fa8b35a2cbfe033b8c47df74a50f2f8bf7b136c8
->>>>>>> 24fde64 (reverted)
+        error_handler.new_error(
+            f"'set' function takes 2 arguments but {len(tree.arguments)} were provided",
+            tree.line)
+        return ''
+    return f'{transform_tree(tree.arguments[0])} = {transform_tree(tree.arguments[1])}'

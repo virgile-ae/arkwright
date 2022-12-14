@@ -5,3 +5,7 @@
     n ))
 
 (print (factorial 4))
+
+(let counter 0)
+(set counter (+ counter 1))
+(print counter)
